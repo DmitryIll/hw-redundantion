@@ -64,6 +64,58 @@ standby 1 preempt
 
 ```
 
+Я так предполагал что нужно бы добавить команд для верхнего роутера:
+```
+standby 1 preempt
+standby 1 track GigabitEthernet0/0
+
+```
+
+А на нижнем роутере добавить:
+
+```
+standby 1 track GigabitEthernet0/0
+```
+
+Но, у меня не получилось выполнить команды - дает ошибку:
+
+
+```
+Router0>en
+Router0#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+Router0(config)#standby 1 preempt
+                 ^
+% Invalid input detected at '^' marker.
+	
+Router0(config)#exit
+Router0#standby 1 preempt
+                ^
+% Invalid input detected at '^' marker.
+	
+Router0#conf -t
+             ^
+% Invalid input detected at '^' marker.
+	
+Router0#standby 1 preempt
+                ^
+% Invalid input detected at '^' marker.
+	
+Router0#standby ?
+% Unrecognized command
+Router0#standby 1 preempt
+                ^
+% Invalid input detected at '^' marker.
+	
+Router0#Router0#standby 1 preempt
+                        ^
+% Invalid input detected at '^' marker.
+
+Router0#                ^
+
+```
+Почему - я пока не понял.
+
 
 Задание 2
 
