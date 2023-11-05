@@ -17,8 +17,47 @@
 
 ## Попытка решения
 
-| dsdf | sdfsdsd |
-| sdf | dsfs|
+Врехний  | Нижний
+------------- | -------------
+interface GigabitEthernet0/0
+ip address 192.168.0.2 255.255.255.0
+duplex auto
+speed auto
+
+standby version 2
+standby 0 ip 192.168.0.1
+standby priority 105
+standby preempt
+standby 0 track GigabitEthernet0/1
+!
+interface GigabitEthernet0/1
+ip address 192.168.1.2 255.255.255.0
+duplex auto
+speed auto
+
+standby version 2
+standby 1 ip 192.168.1.1
+standby 1 priority 50
+  | interface GigabitEthernet0/0
+ip address 192.168.0.3 255.255.255.0
+duplex auto
+speed auto
+
+standby version 2
+standby 0 ip 192.168.0.1
+
+standby preempt
+standby 0 track GigabitEthernet0/1
+!
+interface GigabitEthernet0/1
+ip address 192.168.1.3 255.255.255.0
+duplex auto
+speed auto
+
+standby version 2
+standby 1 ip 192.168.1.1
+standby 1 preempt
+
 
 
 
