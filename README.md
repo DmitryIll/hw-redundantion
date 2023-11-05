@@ -17,8 +17,8 @@
 
 ## Попытка решения
 
-Врехний  | Нижний
-------------- | -------------
+### Настройки верхнего роутреа
+```
 interface GigabitEthernet0/0
 ip address 192.168.0.2 255.255.255.0
 duplex auto
@@ -38,7 +38,11 @@ speed auto
 standby version 2
 standby 1 ip 192.168.1.1
 standby 1 priority 50
-  | interface GigabitEthernet0/0
+``` 
+
+### Настройки нижнего ротуреа
+```
+interface GigabitEthernet0/0
 ip address 192.168.0.3 255.255.255.0
 duplex auto
 speed auto
@@ -58,7 +62,7 @@ standby version 2
 standby 1 ip 192.168.1.1
 standby 1 preempt
 
-
+```
 
 
 Задание 2
