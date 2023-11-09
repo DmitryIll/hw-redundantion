@@ -17,7 +17,7 @@
 
 ## Попытка решения
 
-### Настройки верхнего роутреа
+### Исходные (как было ) настройки верхнего роутреа
 ```
 interface GigabitEthernet0/0
 ip address 192.168.0.2 255.255.255.0
@@ -40,7 +40,7 @@ standby 1 ip 192.168.1.1
 standby 1 priority 50
 ``` 
 
-### Настройки нижнего ротуреа
+### Искходные (как было) настройки нижнего ротуреа
 ```
 interface GigabitEthernet0/0
 ip address 192.168.0.3 255.255.255.0
@@ -64,11 +64,11 @@ standby 1 preempt
 
 ```
 
-Я так предполагал что нужно бы добавить команд для верхнего роутера:
+Для решения считаю, что нужно добавить команды для верхнего роутера:
+
 ```
 standby 1 preempt
 standby 1 track GigabitEthernet0/0
-
 ```
 
 А на нижнем роутере добавить:
@@ -77,47 +77,68 @@ standby 1 track GigabitEthernet0/0
 standby 1 track GigabitEthernet0/0
 ```
 
-Но, у меня не получилось выполнить команды - дает ошибку:
-
+Добавил команды на верхнем роутере:
 
 ```
-Router0>en
-Router0#conf t
+Router0# conf t
 Enter configuration commands, one per line.  End with CNTL/Z.
-Router0(config)#standby 1 preempt
-                 ^
-% Invalid input detected at '^' marker.
-	
-Router0(config)#exit
-Router0#standby 1 preempt
-                ^
-% Invalid input detected at '^' marker.
-	
-Router0#conf -t
-             ^
-% Invalid input detected at '^' marker.
-	
-Router0#standby 1 preempt
-                ^
-% Invalid input detected at '^' marker.
-	
-Router0#standby ?
-% Unrecognized command
-Router0#standby 1 preempt
-                ^
-% Invalid input detected at '^' marker.
-	
-Router0#Router0#standby 1 preempt
-                        ^
-% Invalid input detected at '^' marker.
+Router0(config)#interface GigabitEthernet0/1
+Router0(config-if)#ip address 192.168.1.2 255.255.255.0
+Router0(config-if)#duplex auto
+Router0(config-if)#speed auto
+Router0(config-if)#standby version 2
+Router0(config-if)#standby 1 ip 192.168.1.1
+Router0(config-if)#standby 1 priority 50
+Router0(config-if)#standby 1 preempt
+Router0(config-if)#
+%HSRP-6-STATECHANGE: GigabitEthernet0/1 Grp 1 state Speak -> Standby
+standby 1 track GigabitEthernet0/0
+```
 
-Router0#                ^
+Добавил команды на нижнем роутере:
 
 ```
-Почему - я пока не понял.
+Router1#conf t
+Enter configuration commands, one per line.  End with CNTL/Z.
+Router1(config)#interface GigabitEthernet0/1
+Router1(config-if)#
+%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Speak -> Standby
+
+%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Standby -> Active
+
+Router1(config-if)#standby version 2
+Router1(config-if)#
+%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Speak -> Standby
+
+%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Standby -> Active
+
+Router1(config-if)#standby 1 ip 192.168.1.1
+Router1(config-if)#
+%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Speak -> Standby
+
+%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Standby -> Active
+
+Router1(config-if)#standby 1 preempt
+Router1(config-if)#
+Router1(config-if)#
+%HSRP-6-STATECHANGE: GigabitEthernet0/1 Grp 1 state Speak -> Standby
+
+%HSRP-6-STATECHANGE: GigabitEthernet0/1 Grp 1 state Standby -> Active
+
+Router1(config-if)#standby 1 track GigabitEthernet0/0
+Router1(config-if)#
+```
+
+Схема такая:
+
+![Alt text](image.png)
 
 
-Задание 2
+Пока не понял - как проверить на симуляторе, что не возвращается Активный IP без этих настроек.
+Нужна помощь.
+
+
+# Задание 2
 
     Запустите две виртуальные машины Linux, установите и настройте сервис Keepalived как в лекции, используя пример конфигурационного файла.
     Настройте любой веб-сервер (например, nginx или simple python server) на двух виртуальных машинах
@@ -125,7 +146,91 @@ Router0#                ^
     Настройте Keepalived так, чтобы он запускал данный скрипт каждые 3 секунды и переносил виртуальный IP на другой сервер, если bash-скрипт завершался с кодом, отличным от нуля (то есть порт веб-сервера был недоступен или отсутствовал index.html). Используйте для этого секцию vrrp_script
     На проверку отправьте получившейся bash-скрипт и конфигурационный файл keepalived, а также скриншот с демонстрацией переезда плавающего ip на другой сервер в случае недоступности порта или файла index.html
 
-Дополнительные задания со звёздочкой*
+## Решение
+
+### bash скрипт
+
+на обоих серверах скрипт одинаковый:
+
+```
+#!/bin/bash
+
+if [[ -f /var/www/html/index.nginx-debian.html ]] && bash -c "</dev/tcp/localhost/80"; then
+        echo "Good" >&1
+        exit 0
+else
+        echo "Not good" >&2
+        exit 1
+fi
+```
+
+### Конфигурационный файл
+
+На главном сервере:
+
+```
+vrrp_script check {
+    script "/usr/local/bin/check.sh"
+    interval 3
+    rise 3
+}
+vrrp_instance VI_1 {
+  state MASTER
+  interface eth0
+  virtual_router_id 52
+  priority 255
+  advert_int 1
+
+  virtual_ipaddress {
+    192.168.1.52/24
+  }
+    track_script {
+        check
+    }
+}
+```
+
+На резервном сервере:
+
+```
+vrrp_script check {
+   script /usr/local/bin/check.sh
+   interval 3
+   rise 3
+}
+
+vrrp_instance VI_1 {
+  state BACKUP
+  interface eth0
+  virtual_router_id 52
+  priority 200
+  advert_int 1
+
+  virtual_ipaddress {
+    192.168.1.52/24
+  }
+  track_script {
+    check
+  }
+}
+```
+
+###  скриншот с демонстрацией переезда плавающего ip на другой сервер в случае недоступности порта или файла index.html
+
+Портим файл для имитации сбоя:
+
+![Alt text](image-1.png)
+
+На главном сервере сайт не работает:
+
+![Alt text](image-2.png)
+
+На втором работает и  на плавающем IP работает:
+
+![Alt text](image-3.png)
+
+
+# Дополнительные задания со звёздочкой*
 
 Эти задания дополнительные. Их можно не выполнять. На зачёт это не повлияет. Вы можете их выполнить, если хотите глубже разобраться в материале.
 Задание 3*
