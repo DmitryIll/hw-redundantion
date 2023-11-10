@@ -15,9 +15,16 @@
     Для проверки корректности настройки, разорвите один из кабелей между одним из маршрутизаторов и Switch0 и запустите ping между PC0 и Server0.
     На проверку отправьте получившуюся схему в формате pkt и скриншот, где виден процесс настройки маршрутизатора.
 
-## Попытка решения
+## Решение
+
+Командой смотрю настройки исходные:
+
+```
+Router1#show startup-config 
+```
 
 ### Исходные (как было ) настройки верхнего роутреа
+
 ```
 interface GigabitEthernet0/0
 ip address 192.168.0.2 255.255.255.0
@@ -40,7 +47,7 @@ standby 1 ip 192.168.1.1
 standby 1 priority 50
 ``` 
 
-### Искходные (как было) настройки нижнего ротуреа
+### Исходные (как было) настройки нижнего ротуреа
 ```
 interface GigabitEthernet0/0
 ip address 192.168.0.3 255.255.255.0
@@ -64,6 +71,8 @@ standby 1 preempt
 
 ```
 
+### Анализ исходных  настроек
+
 Для решения считаю, что нужно добавить команды для верхнего роутера:
 
 ```
@@ -77,57 +86,71 @@ standby 1 track GigabitEthernet0/0
 standby 1 track GigabitEthernet0/0
 ```
 
+#### Добавление команд на роутерах
+
 Добавил команды на верхнем роутере:
 
 ```
-Router0# conf t
+Router0>en
+Router0#conf t
 Enter configuration commands, one per line.  End with CNTL/Z.
 Router0(config)#interface GigabitEthernet0/1
-Router0(config-if)#ip address 192.168.1.2 255.255.255.0
-Router0(config-if)#duplex auto
-Router0(config-if)#speed auto
 Router0(config-if)#standby version 2
 Router0(config-if)#standby 1 ip 192.168.1.1
 Router0(config-if)#standby 1 priority 50
 Router0(config-if)#standby 1 preempt
-Router0(config-if)#
-%HSRP-6-STATECHANGE: GigabitEthernet0/1 Grp 1 state Speak -> Standby
-standby 1 track GigabitEthernet0/0
+Router0(config-if)#standby 1 track GigabitEthernet0/0
+Router0(config-if)#exit
+Router0(config)#end
+Router0#
+%SYS-5-CONFIG_I: Configured from console by console
 ```
 
 Добавил команды на нижнем роутере:
 
 ```
+Router1>en
 Router1#conf t
 Enter configuration commands, one per line.  End with CNTL/Z.
 Router1(config)#interface GigabitEthernet0/1
-Router1(config-if)#
-%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Speak -> Standby
-
-%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Standby -> Active
-
 Router1(config-if)#standby version 2
-Router1(config-if)#
-%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Speak -> Standby
-
-%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Standby -> Active
-
 Router1(config-if)#standby 1 ip 192.168.1.1
-Router1(config-if)#
-%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Speak -> Standby
-
-%HSRP-6-STATECHANGE: GigabitEthernet0/0 Grp 0 state Standby -> Active
-
 Router1(config-if)#standby 1 preempt
-Router1(config-if)#
-Router1(config-if)#
+Router1(config-if)#standby 1 track GigabitEthernet0/0
+Router1(config-if)#exit
 %HSRP-6-STATECHANGE: GigabitEthernet0/1 Grp 1 state Speak -> Standby
 
 %HSRP-6-STATECHANGE: GigabitEthernet0/1 Grp 1 state Standby -> Active
 
-Router1(config-if)#standby 1 track GigabitEthernet0/0
-Router1(config-if)#
+Router1(config)#end
 ```
+
+Потом еще на обоих роутерах выполнил:
+
+```
+Router0#wr mem
+Building configuration...
+[OK]
+```
+
+```
+Router1#wr mem
+Building configuration...
+[OK]
+Router1#
+```
+
+Картинка настроек:
+
+Верхний роутер:
+
+![Alt text](image-4.png)
+
+
+
+Нижний роутер:
+
+![Alt text](image-5.png)
 
 Схема такая:
 
